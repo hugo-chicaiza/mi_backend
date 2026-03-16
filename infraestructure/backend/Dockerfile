@@ -1,19 +1,19 @@
-FROM python:3.11-slim			# 1️⃣ Imagen base
+FROM python:3.11-slim			
 
-ENV PYTHONUNBUFFERED=1				# 2️⃣ Variables de entorno
+ENV PYTHONUNBUFFERED=1				
 
-WORKDIR /app							# 3️⃣ Directorio de trabajo
+WORKDIR /app							
 
-RUN apt-get update && apt-get install -y \		# 4️⃣ dependencias (PostgreSQL, OpenLDAP)
+RUN apt-get update && apt-get install -y \		
     postgresql-client \
     ldap-utils \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .						# 5️⃣ Copiar requerimientos y código
+COPY requirements.txt .						
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8080				# 6️⃣ Exponer puerto si tu backend tiene API
+EXPOSE 8080				
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]   # FastApi
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]  

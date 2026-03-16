@@ -1,12 +1,12 @@
-FROM node:20-alpine			# 1️⃣ Imagen base
+FROM node:20-alpine		
 
-WORKDIR /app							# 2️⃣ Directorio de trabajo
+WORKDIR /app						
 
-COPY package.json package-lock.json* ./		# 3️⃣ instalar dependencias de package.json
+COPY package.json package-lock.json* ./		
 RUN npm install
 
-COPY . .				# 4️⃣ Copiar el resto del código
+COPY . .				
 
-EXPOSE 3000								# 5️⃣ Exponer puerto
+EXPOSE 3000							
 
-CMD ["npm", "start"]						# 6️⃣ Comando por defecto (desarrollo)
+CMD ["npm", "start"]		
