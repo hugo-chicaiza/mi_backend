@@ -52,7 +52,7 @@ services:
 
   ldap:
     # OpenLDAP
-    image: osixia/openldap:1.6.0
+    image: osixia/openldap:1.5.0
     container_name: openldap
     environment:
       LDAP_ORGANISATION: "MyBank"
