@@ -4,6 +4,7 @@ name: Bank Mini Project CI/CD
 on:
   push:
     branches: [ main ]
+    branches: [ feature/logs ]
   pull_request:
     branches: [ main ]
 
