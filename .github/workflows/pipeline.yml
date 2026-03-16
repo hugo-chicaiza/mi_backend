@@ -109,20 +109,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Levantar contenedores de prueba
+      - name: Test backend /status endpoint
         working-directory: infraestructure
         run: |
-          docker compose up -d
-          echo "Esperando backend en http://localhost:8080/status..."
+          echo "Esperando backend dentro del contenedor..."
           for i in {1..20}; do
-            curl -f http://localhost:8080/status && break
+            if docker compose exec backend curl -f http://localhost:8080/status; then
+              echo "Backend listo!"
+              break
+            fi
             echo "Backend no listo, esperando 5s..."
             sleep 5
           done
-
-      - name: Test backend /status endpoint
-        working-directory: infraestructure
-        run: curl -f http://localhost:8080/status
 
       - name: Levantar logs y detener contenedores
         working-directory: infraestructure
