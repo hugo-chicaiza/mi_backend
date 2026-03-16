@@ -109,21 +109,55 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Test backend /status endpoint
+      - name: Esperar y testear servicios existentes
         working-directory: infraestructure
         run: |
-          echo "Esperando backend dentro del contenedor..."
-          for i in {1..20}; do
-            if docker compose exec backend curl -f http://localhost:8080/status; then
-              echo "Backend listo!"
-              break
-            fi
-            echo "Backend no listo, esperando 5s..."
-            sleep 5
-          done
+          echo "=== Test de servicios existentes ==="
+
+          # Test PostgreSQL
+          if [ "$(docker ps -q -f name=postgres_db)" ]; then
+            echo "Test PostgreSQL..."
+            docker compose exec db pg_isready -U postgresql -d mi_db || { echo "PostgreSQL no respondió"; exit 1; }
+          else
+            echo "PostgreSQL no existe, omitiendo test."
+          fi
+
+          # Test Redis
+          if [ "$(docker ps -q -f name=redis)" ]; then
+            echo "Test Redis..."
+            docker compose exec redis redis-cli ping || { echo "Redis no respondió"; exit 1; }
+          else
+            echo "Redis no existe, omitiendo test."
+          fi
+
+          # Test OpenLDAP
+          if [ "$(docker ps -q -f name=openldap)" ]; then
+            echo "Test OpenLDAP..."
+            docker compose exec ldap ldapsearch -x -H ldap://ldap -D "cn=admin,dc=mybank,dc=local" -w LDAP123 -b dc=mybank,dc=local || { echo "LDAP no respondió"; exit 1; }
+          else
+            echo "OpenLDAP no existe, omitiendo test."
+          fi
+
+          # Backend (condicional, omitido si no existe)
+          if [ "$(docker ps -q -f name=backend_container)" ]; then
+            echo "Test Backend..."
+            docker compose exec backend curl -f http://localhost:8080/status || { echo "Backend no respondió"; exit 1; }
+          else
+            echo "Backend no existe, omitiendo test."
+          fi
+
+          # Frontend (condicional, omitido si no existe)
+          if [ "$(docker ps -q -f name=frontend_container)" ]; then
+            echo "Test Frontend..."
+            docker compose exec frontend curl -f http://localhost:3000 || { echo "Frontend no respondió"; exit 1; }
+          else
+            echo "Frontend no existe, omitiendo test."
+          fi
 
       - name: Levantar logs y detener contenedores
         working-directory: infraestructure
         run: |
+          echo "=== Logs de contenedores ==="
           docker compose logs
+          echo "=== Deteniendo contenedores ==="
           docker compose down
