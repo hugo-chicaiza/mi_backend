@@ -98,17 +98,6 @@ jobs:
         working-directory: infraestructure
         run: docker build -t frontend-test ./frontend
 
-      # Base de datos y Redis se usan images oficiales, no necesitan build
-
-  # Test de contenedores
-  docker-test:
-    runs-on: ubuntu-22.04
-    needs: docker-build
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Esperar y testear servicios existentes
         working-directory: infraestructure
         run: |
