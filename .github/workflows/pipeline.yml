@@ -43,8 +43,6 @@ jobs:
           npx eslint src || true    
         # Hace que el pipeline no falle si ESLint encuentra errores.
       
-      
-
   # Verificar dependencias de herramientas
   dependency-check:
     runs-on: ubuntu-22.04
@@ -78,25 +76,27 @@ jobs:
 
       - name: Levantar contenedores
         working-directory: infraestructure
-        run: docker compose up -d
+        run: docker compose up -d --build
 
-      - name: Esperar backend
+      - name: Esperar backend dinámicamente
+        working-directory: infraestructure
         run: |
-          echo "Esperando 15s a que el backend esté listo..."
-          sleep 15
-
-      - name: Test endpoint
-        run: curl -f http://localhost:8080/status
+          echo "Esperando backend en http://localhost:8080/status..."
+          for i in {1..20}; do
+            curl -f http://localhost:8080/status && break
+            echo "Backend no listo, esperando 5s..."
+            sleep 5
+          done
 
       # Backend
       - name: Build Backend Docker image
-        run: |
-          docker build -t backend-test ./infraestructure/backend
+        working-directory: infraestructure
+        run: docker build -t backend-test ./backend
 
       # Frontend
       - name: Build Frontend Docker image
-        run: |
-          docker build -t frontend-test ./infraestructure/frontend
+        working-directory: infraestructure
+        run: docker build -t frontend-test ./frontend
 
       # Base de datos y Redis se usan images oficiales, no necesitan build
 
@@ -110,15 +110,22 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Levantar contenedores de prueba
+        working-directory: infraestructure
         run: |
-          docker compose -f infraestructure/docker-compose.yml up -d
-          sleep 15  # esperar que se levanten todos los servicios
+          docker compose up -d
+          echo "Esperando backend en http://localhost:8080/status..."
+          for i in {1..20}; do
+            curl -f http://localhost:8080/status && break
+            echo "Backend no listo, esperando 5s..."
+            sleep 5
+          done
 
       - name: Test backend /status endpoint
-        run: |
-          curl -f http://localhost:8080/status
+        working-directory: infraestructure
+        run: curl -f http://localhost:8080/status
 
       - name: Levantar logs y detener contenedores
+        working-directory: infraestructure
         run: |
-          docker compose -f infraestructure/docker-compose.yml logs
-          docker compose -f infraestructure/docker-compose.yml down
+          docker compose logs
+          docker compose down
