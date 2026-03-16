@@ -19,7 +19,7 @@ services:
     image: postgres:16
     container_name: postgres_db
     environment:
-      POSTGRES_DB: bank
+      POSTGRES_DB: mi_db
       POSTGRES_USER: postgresql
       POSTGRES_PASSWORD: postgresql123
     healthcheck:
@@ -93,7 +93,7 @@ services:
       - backend-net
       - db-net
     environment:
-      DATABASE_URL: postgres://postgresql:postgresql123@db:5432/bank
+      DATABASE_URL: postgres://postgresql:postgresql123@db:5432/mi_db
       REDIS_URL: redis://redis:6379
       LDAP_URL: ldap://ldap:389
     volumes:
