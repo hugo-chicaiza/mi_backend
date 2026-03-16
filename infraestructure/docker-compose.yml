@@ -1,91 +1,102 @@
-networks:           # Redes
-  public-net:       # frontend
-  backend-net:      # interna backend, Redis, backend Python
-  db-net:           # egura con PostgreSQL y OpenLDAP
+networks:
+  # Redes
+  public-net: # frontend
+  backend-net: # interna backend, Redis, backend Python
+  db-net:
+    # egura con PostgreSQL y OpenLDAP
 
-volumes:            # Volumenes persistentes
+volumes:
+  # Volumenes persistentes
   pgdata:
   redisdata:
   ldapdata:
 
-services:           # Servicios
-db:                 # PostgreSQL
-  image: postgres:16
-  container_name: postgres_db
-  environment:
-    POSTGRES_DB: bank
-    POSTGRES_USER: postgresql
-    POSTGRES_PASSWORD: postgresql123
-  volumes:
-    - pgdata:/var/lib/postgresql/data
-    - ../migrations:/docker-entrypoint-initdb.d
-  networks:
-    - db-net
-  ports:
-    - "5432:5432"
 
-redis:              # Redis
-  image: redis:7
-  container_name: redis
-  networks:
-    - backend-net
-  volumes:
-    - redisdata:/data
-  ports:
-    - "6379:6379"
+services:
+  # Servicios
+  db:
+    # PostgreSQL
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: bank
+      POSTGRES_USER: postgresql
+      POSTGRES_PASSWORD: postgresql123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../migrations:/docker-entrypoint-initdb.d
+    networks:
+      - db-net
+    ports:
+      - "5432:5432"
 
-redisinsight:       # RedisInsight
-  image: redislabs/redisinsight:2.0.0
-  container_name: redisinsight
-  networks:
-    - backend-net
-  ports:
-    - "8001:8001"
+  redis:
+    # Redis
+    image: redis:7
+    container_name: redis
+    networks:
+      - backend-net
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
 
-ldap:             # OpenLDAP
-  image: osixia/openldap:1.6.0
-  container_name: openldap
-  environment:
-    LDAP_ORGANISATION: "MyBank"
-    LDAP_DOMAIN: "mybank.local"   #dc.dc
-    LDAP_ADMIN_PASSWORD: "LDAP123"
-  networks:
-    - db-net
-  volumes:
-    - ldapdata:/var/lib/ldap
-    - ldapdata:/etc/ldap/slapd.d
-  ports:
-    - "389:389"
+  redisinsight:
+    # RedisInsight
+    image: redislabs/redisinsight:2.0.0
+    container_name: redisinsight
+    networks:
+      - backend-net
+    ports:
+      - "8001:8001"
 
-backend:            # Backend Python
-  build: ../backend
-  container_name: backend_container
-  depends_on:
-    - db
-    - redis
-    - ldap
-  networks:
-    - backend-net
-    - db-net
-  environment:
-    DATABASE_URL: postgres://postgresql:postgresql123@db:5432/bank
-    REDIS_URL: redis://redis:6379
-    LDAP_URL: ldap://ldap:389
-  volumes:
-    - ../backend:/app     # bind mount solo para desarrollo
-  command: ["python", "main.py"]
-  ports:
-    - "8080:8080"
+  ldap:
+    # OpenLDAP
+    image: osixia/openldap:1.6.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "MyBank"
+      LDAP_DOMAIN: "mybank.local" #dc.dc
+      LDAP_ADMIN_PASSWORD: "LDAP123"
+    networks:
+      - db-net
+    volumes:
+      - ldapdata:/var/lib/ldap
+      - ldapdata:/etc/ldap/slapd.d
+    ports:
+      - "389:389"
 
-frontend:           # Frontend React
-  build: ../frontend
-  container_name: frontend_container
-  networks:
-    - public-net
-    - backend-net
-  ports:
-    - "3000:3000"
-  volumes:
-    - ../frontend:/app    # bind mount solo para desarrollo, reflejar cambios en tiempo real
-  depends_on:
-    - backend
+  backend:
+    # Backend Python
+    build: ../backend
+    container_name: backend_container
+    depends_on:
+      - db
+      - redis
+      - ldap
+    networks:
+      - backend-net
+      - db-net
+    environment:
+      DATABASE_URL: postgres://postgresql:postgresql123@db:5432/bank
+      REDIS_URL: redis://redis:6379
+      LDAP_URL: ldap://ldap:389
+    volumes:
+      - ../backend:/app # bind mount solo para desarrollo
+    command: [ "python", "main.py" ]
+    ports:
+      - "8080:8080"
+
+  frontend:
+    # Frontend React
+    build: ../frontend
+    container_name: frontend_container
+    networks:
+      - public-net
+      - backend-net
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app # bind mount solo para desarrollo, reflejar cambios en tiempo real
+    depends_on:
+      - backend
