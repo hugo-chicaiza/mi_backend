@@ -68,7 +68,7 @@ services:
 
   backend:
     # Backend Python
-    build: ../backend
+    build: ./backend
     container_name: backend_container
     depends_on:
       - db
@@ -89,7 +89,7 @@ services:
 
   frontend:
     # Frontend React
-    build: ../frontend
+    build: ./frontend
     container_name: frontend_container
     networks:
       - public-net
