@@ -3,8 +3,9 @@ name: Bank Mini Project CI/CD
 # Se ejecuta en cada push a main o pull request
 on:
   push:
-    branches: [ main ]
-    branches: [ feature/logs ]
+     branches:
+      - main
+      - feature/*
   pull_request:
     branches: [ main ]
 
