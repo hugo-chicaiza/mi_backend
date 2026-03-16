@@ -10,7 +10,7 @@ r = redis.Redis(host="redis", port=6379)
 
 # Configuracion PostgreSQL
 conn = psycopg2.connect(
-    dbname="bank",
+    dbname="mi_db",
     user="app_admin",
     password="appadmin123",
     host="db",
