@@ -1,0 +1,108 @@
+name: Bank Mini Project CI/CD
+
+# Se ejecuta en cada push a main o pull request
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Validacion de codigo
+  validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install backend dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r ./infraestructure/backend/requirements.txt
+
+      - name: Lint backend Python
+        run: |
+          pip install flake8
+          flake8 ./infraestructure/backend
+
+      - name: Lint frontend JS/React
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: |
+          cd infraestructure/frontend
+          npm install
+          npx eslint src || true    
+        # Hace que el pipeline no falle si ESLint encuentra errores.
+
+  # Verificar dependencias de herramientas
+  dependency-check:
+    runs-on: ubuntu-22.04
+    needs: validation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Verificar Docker
+        run: docker --version
+
+      - name: Verificar Docker Compose
+        run: docker compose version
+
+      - name: Verificar Python
+        run: python --version
+
+      - name: Verificar Node.js
+        run: node --version
+        shell: bash
+
+  # Construccion de imagenes Docker
+  docker-build:
+    runs-on: ubuntu-22.04
+    needs: dependency-check
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Backend
+      - name: Build Backend Docker image
+        run: |
+          docker build -t backend-test ./infraestructure/backend
+
+      # Frontend
+      - name: Build Frontend Docker image
+        run: |
+          docker build -t frontend-test ./infraestructure/frontend
+
+      # Base de datos y Redis se usan images oficiales, no necesitan build
+
+  # Test de contenedores
+  docker-test:
+    runs-on: ubuntu-22.04
+    needs: docker-build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Levantar contenedores de prueba
+        run: |
+          docker compose -f infraestructure/docker-compose.yml up -d
+          sleep 15  # esperar que se levanten todos los servicios
+
+      - name: Test backend /status endpoint
+        run: |
+          curl -f http://localhost:8080/status
+
+      - name: Levantar logs y detener contenedores
+        run: |
+          docker compose -f infraestructure/docker-compose.yml logs
+          docker compose -f infraestructure/docker-compose.yml down
