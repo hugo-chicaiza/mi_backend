@@ -13,7 +13,7 @@ volumes:
 
 
 services:
-  # Servicios
+  # Servicioss
   db:
     # PostgreSQL
     image: postgres:16
