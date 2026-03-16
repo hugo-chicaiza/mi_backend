@@ -19,7 +19,12 @@ conn = psycopg2.connect(
 
 # Configuracion OpenLDAP
 ldap_server = Server('ldap', get_info=ALL)
-ldap_conn = Connection(ldap_server, user='cn=admin,dc=mybank,dc=local', password='LDAP123')
+ldap_conn = Connection(
+    ldap_server, 
+    user='cn=admin,dc=mybank,dc=local', 
+    password='LDAP123'
+)
+
 ldap_conn.bind()
 
 # Endpoint de prueba
@@ -30,3 +35,4 @@ def status():
         "redis_connected": r.ping(),
         "ldap_connected": ldap_conn.bound
     }
+    
